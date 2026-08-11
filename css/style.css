@@ -1,0 +1,339 @@
+/* ===== 기본 리셋 & 변수 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-primary: #1F3864;
+  --color-primary-light: #3B5998;
+  --color-accent: #FF7A45;
+  --color-bg: #F5F7FA;
+  --color-card-bg: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-text-muted: #6B7280;
+  --color-error: #D93025;
+  --color-border: #E2E6EC;
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* ===== 헤더 ===== */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: var(--color-card-bg);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.logo span {
+  color: var(--color-accent);
+}
+
+.top-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--color-primary);
+  transition: background-color 0.2s ease;
+}
+
+.nav-btn:hover {
+  background-color: var(--color-bg);
+}
+
+/* ===== 메인 영역 & 화면 전환 ===== */
+#app-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active-screen {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen h2 {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+  border-left: 4px solid var(--color-accent);
+  padding-left: 12px;
+}
+
+/* ===== HOME ===== */
+.hero {
+  text-align: center;
+  padding: 60px 16px;
+}
+
+.hero h1 {
+  font-size: 2.2rem;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+.hero p {
+  color: var(--color-text-muted);
+  margin-bottom: 32px;
+  font-size: 1.05rem;
+}
+
+/* ===== 버튼 ===== */
+.primary-btn {
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.primary-btn:hover {
+  background-color: var(--color-primary-light);
+}
+
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+.secondary-btn {
+  background-color: #fff;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background-color: var(--color-bg);
+}
+
+/* ===== 폼 ===== */
+#trip-form {
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* ===== 카드 리스트 (추천지/행사/숙박/맛집/영상 공통) ===== */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-card {
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.info-card h3 {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.info-card p {
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.info-card .card-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.info-card a {
+  color: var(--color-primary-light);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.info-card a:hover {
+  text-decoration: underline;
+}
+
+.info-card img.thumb {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* ===== 상태 메시지(로딩/에러/빈 목록) ===== */
+.loading-box {
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius);
+}
+
+.error-message {
+  padding: 14px 16px;
+  background-color: #FDEDEC;
+  color: var(--color-error);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.empty-message {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ===== GUIDE ===== */
+.guide-content h3 {
+  color: var(--color-primary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.guide-content p {
+  color: var(--color-text-muted);
+}
+
+/* ===== 푸터 ===== */
+.app-footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* ===== 반응형 (모바일) ===== */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 12px 16px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  #app-main {
+    padding: 16px 14px 40px;
+  }
+
+  .hero {
+    padding: 40px 8px;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+  }
+
+  .primary-btn {
+    width: 100%;
+  }
+
+  .radio-group {
+    gap: 12px;
+  }
+}
