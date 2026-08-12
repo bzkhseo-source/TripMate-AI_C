@@ -16,7 +16,8 @@ const tripState = {
   events: null,
   stays: null,
   foods: null,
-  videos: null
+  videos: null,
+  viewOnly: false
 };
 
 const SAVED_TRIPS_KEY = "tripmate_saved_trips";
@@ -169,6 +170,8 @@ function setupTripForm() {
     tripState.city = domesticOrOverseas === "overseas" ? overseasCity : domesticCity;
     tripState.tripStyle = tripStyle || null;
 
+    tripState.viewOnly = false;
+
     console.log("여행 정보 저장 완료:", tripState);
 
     showScreen("recommend-section");
@@ -188,22 +191,38 @@ function setupResultNavButtons() {
 
   toEventsBtn.addEventListener("click", () => {
     showScreen("events-section");
-    fetchEvents();
+    if (tripState.viewOnly) {
+      renderEvents(tripState.events);
+    } else {
+      fetchEvents();
+    }
   });
 
   toStayBtn.addEventListener("click", () => {
     showScreen("stay-section");
-    fetchStays();
+    if (tripState.viewOnly) {
+      renderPlaceList(tripState.stays, "stay-list");
+    } else {
+      fetchStays();
+    }
   });
 
   toFoodBtn.addEventListener("click", () => {
     showScreen("food-section");
-    fetchFoods();
+    if (tripState.viewOnly) {
+      renderPlaceList(tripState.foods, "food-list");
+    } else {
+      fetchFoods();
+    }
   });
 
   toYoutubeBtn.addEventListener("click", () => {
     showScreen("youtube-section");
-    fetchVideos();
+    if (tripState.viewOnly) {
+      renderVideos(tripState.videos);
+    } else {
+      fetchVideos();
+    }
   });
 
   saveTripBtn.addEventListener("click", () => {
@@ -650,6 +669,14 @@ function renderMyTripList() {
     btnRow.style.marginTop = "12px";
     btnRow.style.display = "flex";
     btnRow.style.gap = "8px";
+    btnRow.style.flexWrap = "wrap";
+
+    const viewBtn = document.createElement("button");
+    viewBtn.className = "primary-btn";
+    viewBtn.style.marginTop = "0";
+    viewBtn.style.padding = "10px 16px";
+    viewBtn.textContent = "상세보기";
+    viewBtn.addEventListener("click", () => loadSavedTrip(trip.id));
 
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "secondary-btn";
@@ -667,12 +694,47 @@ function renderMyTripList() {
       }
     });
 
+    btnRow.appendChild(viewBtn);
     btnRow.appendChild(toggleBtn);
     btnRow.appendChild(deleteBtn);
     card.appendChild(btnRow);
 
     listBox.appendChild(card);
   });
+}
+
+// 저장된 여행 계획을 재조회 없이 그대로 불러와서 결과 화면들에 표시
+function loadSavedTrip(tripId) {
+  const trips = getSavedTrips();
+  const trip = trips.find((t) => t.id === tripId);
+  if (!trip) {
+    alert("저장된 여행 정보를 찾을 수 없습니다.");
+    return;
+  }
+
+  tripState.startDate = trip.startDate;
+  tripState.endDate = trip.endDate;
+  tripState.domesticOrOverseas = trip.domesticOrOverseas;
+  tripState.country = trip.country;
+  tripState.city = trip.city;
+  tripState.tripStyle = trip.tripStyle;
+  tripState.recommendations = trip.recommendations;
+  tripState.events = trip.events;
+  tripState.stays = trip.stays;
+  tripState.foods = trip.foods;
+  tripState.videos = trip.videos;
+  tripState.viewOnly = true;
+
+  showScreen("recommend-section");
+
+  const nextBtn = document.getElementById("to-events-btn");
+  const errorBox = document.getElementById("recommend-error");
+  const loadingBox = document.getElementById("recommend-loading");
+  errorBox.hidden = true;
+  loadingBox.hidden = true;
+  nextBtn.hidden = false;
+
+  renderRecommendations(trip.recommendations || { places: [] });
 }
 
 // ---------------------------------------------------

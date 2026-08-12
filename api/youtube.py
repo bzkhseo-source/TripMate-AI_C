@@ -2,14 +2,16 @@
 TripMate AI - YouTube Data API v3 연동 모듈
 
 역할:
-- 추천 맛집 이름 기반으로 YouTube 리뷰 영상을 검색해 조회수 기준 상위 3개를 반환
-- 맛집 이름 기반 검색 결과가 0건이면, 지역 맛집 일반 검색으로 자동 재시도(fallback)
+- 추천 맛집 이름 기반으로 YouTube 리뷰/브이로그 영상을 검색해 조회수 기준 상위 3개를 반환
+- 검색어 하나에 의존하지 않고, 여러 검색어를 순차 시도하며 결과를 모아
+  다양한 영상이 노출되도록 한다.
 - 기능 요구사항: 인기 여행 영상 TOP 3 제공
 
 주의:
-- search.list 1회 호출은 100 유닛을 소모한다 (일일 할당량 10,000유닛 기준 약 100회 검색 가능).
-  fallback이 발동하면 최대 2회(200유닛) 소모되지만, 캐싱(api/cache.py)으로 동일 조건
-  재검색 시에는 API를 다시 호출하지 않는다.
+- search.list 1회 호출은 100 유닛을 소모한다. 이 모듈은 검색어 여러 개를
+  순차 시도할 수 있어 최악의 경우 여러 번 호출될 수 있지만, 목표 개수를
+  채우면 즉시 중단하며, local_server.py의 캐싱으로 동일 조건 재검색 시
+  API를 다시 호출하지 않는다.
 - API 키는 .env에서 로드하며 코드에 직접 작성하지 않는다.
 """
 
@@ -67,6 +69,7 @@ def _search(query: str, max_results: int) -> list:
         if not video_id:
             continue
         results.append({
+            "id": video_id,
             "title": snippet.get("title", "제목 없음"),
             "channel": snippet.get("channelTitle", "채널 정보 없음"),
             "thumbnail": snippet.get("thumbnails", {}).get("medium", {}).get("url"),
@@ -76,21 +79,59 @@ def _search(query: str, max_results: int) -> list:
     return results
 
 
+def _build_query_list(country: str, city: str, food_names: list = None) -> list:
+    """
+    다양한 결과를 얻기 위해 시도할 검색어 목록을 우선순위 순으로 구성한다.
+    앞쪽일수록 더 구체적인(맛집 이름 기반) 검색어이다.
+    """
+    queries = []
+
+    if food_names:
+        cleaned = [n for n in food_names if n]
+        for name in cleaned[:3]:
+            queries.append(f"{city} {name} 맛집")
+        if len(cleaned) >= 2:
+            queries.append(f"{city} {' '.join(cleaned[:2])} 맛집 브이로그")
+
+    queries.append(f"{city} {country} 맛집 추천")
+    queries.append(f"{city} 여행 브이로그")
+    queries.append(f"{city} {country} 여행")
+
+    return queries
+
+
 def search_top_videos(country: str, city: str, food_names: list = None, max_results: int = 3) -> list:
     """
-    지역명(또는 추천 맛집명)으로 검색해 조회수 기준 상위 영상을 반환한다.
-
-    1) food_names가 있으면 맛집 이름 기반으로 먼저 검색
-    2) 결과가 0건이면 지역 맛집 일반 검색어로 자동 재시도
-    3) food_names가 없으면 처음부터 지역 맛집 일반 검색
+    여러 검색어를 순차적으로 시도하여, 중복 없는 영상을 최대 max_results개까지 모은다.
+    앞선 검색어에서 목표 개수를 채우면 이후 검색어는 시도하지 않는다.
     """
-    if food_names:
-        top_names = [n for n in food_names if n][:2]
-        specific_query = f"{city} {' '.join(top_names)} 맛집"
-        results = _search(specific_query, max_results)
-        if results:
-            return results
-        # 맛집 이름 기반 검색 결과가 없으면 일반 검색으로 재시도
+    queries = _build_query_list(country, city, food_names)
 
-    fallback_query = f"{city} {country} 맛집 추천"
-    return _search(fallback_query, max_results)
+    collected = []
+    seen_ids = set()
+
+    for query in queries:
+        if len(collected) >= max_results:
+            break
+
+        remaining = max_results - len(collected)
+        try:
+            results = _search(query, max_results=remaining)
+        except YoutubeError:
+            # 특정 검색어에서 오류가 나도, 이미 확보한 결과가 있으면 계속 진행
+            if collected:
+                continue
+            raise
+
+        for video in results:
+            if video["id"] not in seen_ids:
+                seen_ids.add(video["id"])
+                collected.append(video)
+            if len(collected) >= max_results:
+                break
+
+    # 내부용 id 필드는 프론트에 불필요하므로 제거
+    for v in collected:
+        v.pop("id", None)
+
+    return collected
