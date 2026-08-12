@@ -1,23 +1,26 @@
 """
-TripMate AI - 로컬 테스트 서버
+TripMate AI - Vercel 배포용 진입점 (Serverless Function)
 
-목적:
-- Vercel에 배포하기 전, 로컬 PC에서 프론트엔드와 Python API 로직을
-  빠르게 연동 테스트하기 위한 Flask 서버.
-- 실제 배포용 Serverless Function 형식은 STEP 16에서 별도로 정리한다.
-- 동일 조건 재검색 시 api/cache.py를 통해 24시간 캐시를 활용,
-  외부 API(Gemini/Places/TourAPI/Ticketmaster/YouTube) 호출을 절약한다.
-
-실행 방법:
-  python local_server.py
-  -> http://127.0.0.1:5000 에서 정적 파일 + API가 함께 서빙됨
+역할:
+- Vercel은 api/ 폴더의 .py 파일을 서버리스 함수로 인식한다. 이 파일이 유일한
+  진입점이며, 여기서 노출하는 Flask 앱(app)이 모든 라우트(/, /api/*)를 처리한다.
+- 실제 API 로직은 server/ 패키지의 모듈들이 담당하고, 이 파일은 그것들을
+  Flask 라우트로 연결하는 역할만 한다.
+- vercel.json의 rewrites 설정에 따라 모든 요청이 이 함수로 전달된다.
 """
 
 import os
+import sys
+
+# server 패키지를 import할 수 있도록 프로젝트 루트를 sys.path에 추가
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
 from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
-load_dotenv()  # .env 파일에서 환경변수 로드
+load_dotenv()
 
 from server.recommend import get_ai_recommendations, RecommendationError
 from server.places import search_stays, search_foods, PlacesError
@@ -25,12 +28,12 @@ from server.events import get_events, EventsError
 from server.youtube import search_top_videos, YoutubeError
 from server.cache import get_cached, set_cache
 
-app = Flask(__name__, static_folder=".", static_url_path="")
+app = Flask(__name__, static_folder=ROOT_DIR, static_url_path="")
 
 
 @app.route("/")
 def serve_index():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(ROOT_DIR, "index.html")
 
 
 @app.route("/api/recommend", methods=["POST"])
@@ -177,7 +180,3 @@ def api_videos():
         return jsonify({"error": str(e)}), 502
     except Exception:
         return jsonify({"error": "영상 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."}), 500
-
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
