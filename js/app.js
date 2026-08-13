@@ -52,6 +52,13 @@ function setupTopNav() {
       }
     });
   });
+
+  const logoBtn = document.getElementById("logo-home-btn");
+  if (logoBtn) {
+    logoBtn.addEventListener("click", () => {
+      showScreen("home-section");
+    });
+  }
 }
 
 // ---------------------------------------------------
